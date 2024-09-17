@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="titlediv">
+    <h1>Welcome to Chat App</h1>
+</div>
+<div class="container">
+    <!-- Message Section -->
+    <div id="messageSection" class="messageSectionDiv">
+        <h2>Send a Message</h2>
+        <textarea id="message" placeholder="Max 250 Characters" required></textarea>
+        <div class="buttons">
+            <button onclick="sendMessage()">Send</button>
+            <button onclick="fetchMessages()">Retrieve</button>
+        </div>
+        <div id="responseMessage" class="response-message"></div>
+    </div>
+
+    <!-- Response Section -->
+    <div id="responseSection" class="responseSectionDiv" style="display:none;">
+        <h2>Messages</h2>
+        <table id="messagesTable">
+            <thead>
+            <tr>
+                <th>Message</th>
+                <th>Timestamp</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Rows will be dynamically added here -->
+            </tbody>
+        </table>
+        <div class="backbutton">
+            <button id="backButton" onclick="goToSendMessage()">Go to Send Message</button>
+        </div>
+    </div>
+</div>
+<script>
+    function sendMessage() {
+        const message = document.getElementById('message').value;
+        if (!message) {
+            alert('Message cannot be empty.');
+            return;
+        }
+        if (message.length > 250) {
+            alert('Message can’t exceed 250 characters.');
+            return;
+        }
+        fetch('/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message, timeStamp: Date.now() })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            document.getElementById('message').value = '';
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+
+    function fetchMessages() {
+    fetch('/messages')
+        .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        // Handle the specific case where no messages are found or other errors
+                        return response.json().then(errorData => {
+                            if (response.status === 404 && errorData.error) {
+                                throw new Error(errorData.error.join(', ')); // Join errors with a comma if there are multiple
+                            } else {
+                                throw new Error('An error occurred while fetching messages');
+                            }
+                        });
+                    }
+                })
+        .then(messages => {
+            const tableBody = document.querySelector('#messagesTable tbody');
+            tableBody.innerHTML = '';
+            messages.forEach(message => {
+                const row = document.createElement('tr');
+                const messageCell = document.createElement('td');
+                messageCell.innerText = message.message;
+                const timestampCell = document.createElement('td');
+                timestampCell.innerText = message.timeStamp;
+                row.appendChild(messageCell);
+                row.appendChild(timestampCell);
+                tableBody.appendChild(row);
+            });
+            document.getElementById('messageSection').style.display = 'none';
+            document.getElementById('responseSection').style.display = 'block';
+        })
+        .catch(error => {
+            alert(error.message)
+        });
+}
+    function goToSendMessage() {
+        document.getElementById('responseSection').style.display = 'none';
+        document.getElementById('messageSection').style.display = 'block';
+    }
+</script>
+</body>
+</html>
