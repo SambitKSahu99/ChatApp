@@ -1,12 +1,8 @@
-FROM openjdk:17-jdk AS builder
+FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY build.gradle gradlew ./
-COPY gradle gradle
-COPY src src
-RUN ./gradlew build --no-daemon
-
-FROM openjdk:17
-WORKDIR /app
-COPY --from=builder /app/build/libs/*.jar app.jar
-CMD ["java","-jar","app.jar"]
+COPY . .
+RUN apt-get update && apt-get install -y tzdata
+ENV TZ=Asia/Kolkata
+Run ./gradle build
 EXPOSE 8080
+ENTRYPOINT ["java","-jar","/app/build/libs/ChatApp-0.0.1-SNAPSHOT.jar"]
