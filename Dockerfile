@@ -5,7 +5,7 @@ COPY gradle gradle
 COPY src src
 RUN ./gradlew build --no-daemon
 
-FROM openjdk:17-jre
+FROM openjdk:17
 WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 CMD ["java","-jar","app.jar"]
